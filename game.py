@@ -175,14 +175,88 @@ class Game:
         """
         Rotates faller clockwise, and keeps track of rotated position
         """
-        self.faller['rotation'] = (self.faller['rotation'] + 90) % 360
+        if not self.faller:
+            return
+        
+        current_rotation = self.faller['rotation']
+        new_rotation = (current_rotation + 90) % 360
+
+        row = self.faller['row']
+        left_col = self.faller['left_col']
+
+        if new_rotation == 90 or new_rotation == 270:
+
+            if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
+                return 
+
+            self.faller['right_col'] = left_col  
+
+        elif new_rotation == 0 or new_rotation == 180:
+
+            if left_col + 1 >= self.cols or self.field[row][left_col + 1] != ' ':
+                return  
+
+            self.faller['right_col'] = left_col + 1  
+
+        self.faller['rotation'] = new_rotation
+
+    def wall_kick(self, row: int, left_col: int) -> None:
+        if self.field[row][left_col + 1] != ' ':
+            self.field[row][left_col + 2] = self.field[row][left_col]
+            self.field[row][left_col + 1] = ' '
+
+    def move_left(self) -> bool:  # have to fix logic, why is the empty cell not actually empty
+        """
+        Shifts faller to the left if adjacent cell is available
+
+
+        Returns:
+          bool: True or False
+        """
+        if not self.faller:
+            return False
+
+        left_col = self.faller['left_col']
+        right_col = self.faller['right_col']
+        row = self.faller['row']
+
+        if left_col > 0:
+            if self.field[row][left_col - 1] == ' ' and self.field[row][right_col - 1] == ' ':
+                self.faller['left_col'] -= 1
+                self.faller['right_col'] -= 1
+        return True
 
     # implement a method later to check if position is available
     def rotate_counter(self) -> None:
         """
         Rotates faller counter clockwise, and keeps track of rotated position
         """
-        self.faller['rotation'] = (self.faller['rotation'] + 270) % 360
+
+        if not self.faller:
+            return
+        
+        current_rotation = self.faller['rotation']
+        new_rotation = (current_rotation + 270) % 360
+
+        row = self.faller['row']
+        left_col = self.faller['left_col']
+
+        if new_rotation == 90 or new_rotation == 270:
+            if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
+                return
+            self.faller['right_col'] = left_col
+
+        elif new_rotation == 0 or new_rotation == 180:
+            if left_col + 1 >= self.cols or self.field[row][left_col + 1] != ' ':
+                return
+            self.faller['right_col'] = left_col + 1
+
+        self.faller['rotation'] = new_rotation
+
+    def wall_kick(self, row: int, left_col: int) -> None:
+        if self.field[row][left_col + 1] != ' ':
+            self.field[row][left_col + 2] = self.field[row][left_col]
+            self.field[row][left_col + 1] = ' '
 
     def move_left(self) -> bool:  # have to fix logic, why is the empty cell not actually empty
         """
@@ -262,6 +336,7 @@ class Game:
             self.matches_to_clear = matched_cells
 
         return len(matched_cells) > 0
+
 
     def find_horizontal_match(self) -> list[tuple]:
         """

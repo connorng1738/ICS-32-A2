@@ -220,4 +220,5 @@ def _rotate_270(r: int, l_col: int, l_color: str, r_color: str, state: str, row:
                    return f"|{l_color}|"
                else:
                    return f"{l_color}"
+    
    return None  
