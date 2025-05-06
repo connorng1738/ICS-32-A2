@@ -25,25 +25,31 @@ def main ():
        game.create_content_field(contents)
        game.resolve_matches()
       
-
-
    while True:
-      
        UI.display_field(game)
        game.remove_matches()
-
 
        if game.check_virus():
            print('LEVEL CLEARED')
        command = input()
 
-
        if command.startswith("Q"):
            break
-       if command.startswith("F"):
-           game.create_faller(command)
+       if command.startswith("F"): #do i have to make this better
+            middle = cols//2
+            left_col = middle - 1
+            right_col = middle
+            game.create_faller(command)
+            game.faller_start_state()
+            if not game.can_create_faller(1, left_col, right_col):
+                UI.display_field(game)
+                print("GAME OVER")
+                break
+            
+
        if not command:
-           game.apply_gravity()
+           game.apply_gravity_faller()
+           game.apply_gravity_vitamin()
        if command.startswith("A"):
            game.rotate_clockwise()
        if command.startswith("B"):
