@@ -116,15 +116,22 @@ class Game:
                 self.faller['state'] = 'frozen'
                 self.freeze_faller()
 
-    def apply_gravity_vitamin(self) -> None:
+    def get_gravity_vitamin(self) -> list[tuple]:
+        vitamin_list = []
         for row in range(len(self.field) - 2, - 1, - 1):
             for col in range(len(self.field[row])):
-                # print(self.field[row][col])
                 if self.field[row][col].strip() in ['R', 'Y', 'B']:
                     if self.field[row + 1][col] == ' ':
-                        self.field[row + 1][col] = self.field[row][col]
-                        self.field[row][col] = ' '
-                        return
+                        vitamin_list.append((row, col))
+        return vitamin_list
+
+    def apply_gravity_vitamin(self) -> None:
+
+        for row, col in self.get_gravity_vitamin():
+            self.field[row + 1][col] = self.field[row][col]
+            self.field[row][col] = ' '
+
+        return
 
     def freeze_faller(self) -> None:
         """
@@ -177,7 +184,7 @@ class Game:
         """
         if not self.faller:
             return
-        
+
         current_rotation = self.faller['rotation']
         new_rotation = (current_rotation + 90) % 360
 
@@ -187,16 +194,16 @@ class Game:
         if new_rotation == 90 or new_rotation == 270:
 
             if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
-                return 
+                return
 
-            self.faller['right_col'] = left_col  
+            self.faller['right_col'] = left_col
 
         elif new_rotation == 0 or new_rotation == 180:
 
             if left_col + 1 >= self.cols or self.field[row][left_col + 1] != ' ':
-                return  
+                return
 
-            self.faller['right_col'] = left_col + 1  
+            self.faller['right_col'] = left_col + 1
 
         self.faller['rotation'] = new_rotation
 
@@ -234,7 +241,7 @@ class Game:
 
         if not self.faller:
             return
-        
+
         current_rotation = self.faller['rotation']
         new_rotation = (current_rotation + 270) % 360
 
@@ -258,7 +265,7 @@ class Game:
             self.field[row][left_col + 2] = self.field[row][left_col]
             self.field[row][left_col + 1] = ' '
 
-    def move_left(self) -> bool:  # have to fix logic, why is the empty cell not actually empty
+    def move_left(self) -> bool:
         """
         Shifts faller to the left if adjacent cell is available
 
@@ -297,7 +304,6 @@ class Game:
 
         if rotation == 0 or rotation == 180:
             if right_col < self.cols - 1:
-                # this logic works for a horizontal faller
                 if self.field[row][left_col + 1] == ' ' and self.field[row][right_col + 1] == ' ':
                     self.faller['left_col'] += 1
                     self.faller['right_col'] += 1
@@ -328,6 +334,7 @@ class Game:
         """
 
         matched_cells = []
+        print(matched_cells)
         matched_cells.extend(self.find_horizontal_match())
         matched_cells.extend(self.find_vertical_match())
 
@@ -336,7 +343,6 @@ class Game:
             self.matches_to_clear = matched_cells
 
         return len(matched_cells) > 0
-
 
     def find_horizontal_match(self) -> list[tuple]:
         """
