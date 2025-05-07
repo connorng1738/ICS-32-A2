@@ -334,7 +334,8 @@ class Game:
         """
 
         matched_cells = []
-        print(matched_cells)
+        
+        print(self.find_vertical_match())
         matched_cells.extend(self.find_horizontal_match())
         matched_cells.extend(self.find_vertical_match())
 
@@ -351,33 +352,36 @@ class Game:
         Returns:
             list[tuple]: List of (row, col) tuples representing horizontal matches.
         """
-        matched_cells = []
+        matched = []
 
         for r in range(self.rows):
             c = 0
-            while c < self.cols - 3:
-                cell = self.field[r][c].strip('-').strip()
+            while c <= self.cols - 4:
+                current_cell = self.field[r][c]
+                char = current_cell.strip('-')
 
-                if not cell or cell[0].lower() not in ['r', 'y', 'b']:
+                if char != ' ':
+                    run = [(r, c)]
+                    i = 1
+                
+                    while c + i < self.cols:
+                        next_char  = self.field[r][c + i].strip('-')
+                        if next_char == char:
+                            run.append((r, c + i))
+                            i += 1
+                        else:
+                            break
+
+                    if len(run) >= 4:
+                        for pos in run:
+                            if pos not in matched:
+                                matched.append(pos)
+
+                    c += len(run)
+                else:
                     c += 1
-                    continue
-
-                match_char = cell[0].lower()
-                run = [(r, c)]
-
-                for i in range(1, self.cols - c):
-                    next_cell = self.field[r][c + i].strip('-').strip()
-                    if next_cell and next_cell[0].lower() == match_char:
-                        run.append((r, c + i))
-                    else:
-                        break
-
-                if len(run) >= 4:
-                    matched_cells.extend(run)
-
-                c += len(run)
-
-        return matched_cells
+        
+        return matched
 
     def find_vertical_match(self) -> list[tuple]:
         """
@@ -386,34 +390,36 @@ class Game:
         Returns:
             list[tuple]: List of (row, col) tuples representing vertical matches.
         """
-        matched_cells = []
+        matched = [] 
 
         for c in range(self.cols):
             r = 0
-            while r < self.rows - 3:
-                cell = self.field[r][c].strip()
+            while r <= self.rows - 4:
+                current_cell = self.field[r][c]
+                char = current_cell.strip('-')
 
-                if not cell or cell[0].lower() not in ['r', 'y', 'b']:
+                if char != ' ':
+                    run = [(r, c)]
+                    i = 1
+
+                    while r + i < self.rows:
+                        next_char = self.field[r +i][c].strip('-')
+                        if next_char == char:
+                            run.append((r + i, c))
+                            i += 1
+                        else:
+                            break
+                    
+                    if len(run) >= 4:
+                        for pos in run:
+                            if pos not in matched:
+                                matched.append(pos)
+                    
+                    r += len(run)
+                else:
                     r += 1
-                    continue
-
-                match_char = cell[0].lower()
-                run = [(r, c)]
-
-                for i in range(1, self.rows - r):
-                    next_cell = self.field[r + i][c].strip()
-
-                    if next_cell and next_cell[0].lower() == match_char:
-                        run.append((r + i, c))
-                    else:
-                        break
-
-                if len(run) >= 4:
-                    matched_cells.extend(run)
-
-                r += len(run)
-
-        return matched_cells
+        
+        return matched
 
     def mark_matches(self, matched_cells) -> None:
         """
