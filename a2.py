@@ -55,6 +55,7 @@ def main():
             game.move_right()
         if command.startswith("V"):
             game.create_virus(command)
+
         game.resolve_matches()
 
 

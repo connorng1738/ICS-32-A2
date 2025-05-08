@@ -43,6 +43,10 @@ class Game:
         Arguments:
           command: list of user input
         """
+
+        if self.faller is not None:
+            return
+        
         parts = shlex.split(command)
         left, right = parts[1], parts[2]
 
@@ -52,6 +56,9 @@ class Game:
         else:
             left_col = self.cols // 2 - 1
             right_col = self.cols // 2
+        
+        if self.field[0][left_col] != ' ' or self.field[0][right_col] != ' ':
+            return
 
         self.faller = {
             'row': 1,
@@ -77,7 +84,7 @@ class Game:
                 self.faller['state'] = 'landed'
 
     def can_create_faller(self, row: int, left_col: int, right_col: int) -> bool:
-        return self.field[row][left_col] == ' ' and self.field[row][right_col] == ' '
+        return self.field[row][left_col] == ' ' and self.field[row][right_col] == ' ' #returns game over if occupied by viruses as well 
 
     def apply_gravity_faller(self) -> None:
         """
@@ -179,59 +186,40 @@ class Game:
         return True
 
     def rotate_clockwise(self) -> None:
-        """
-        Rotates faller clockwise, and keeps track of rotated position
-        """
-        if not self.faller:
-            return
-
-        current_rotation = self.faller['rotation']
-        new_rotation = (current_rotation + 90) % 360
-
-        row = self.faller['row']
-        left_col = self.faller['left_col']
-
-        if new_rotation == 90 or new_rotation == 270:
-
-            if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
+            """
+            Rotates faller clockwise, and keeps track of rotated position
+            """
+            if not self.faller:
                 return
 
-            self.faller['right_col'] = left_col
+            current_rotation = self.faller['rotation']
+            new_rotation = (current_rotation + 90) % 360
 
-        elif new_rotation == 0 or new_rotation == 180:
+            row = self.faller['row']
+            left_col = self.faller['left_col']
 
-            if left_col + 1 >= self.cols or self.field[row][left_col + 1] != ' ':
-                return
+            if new_rotation == 90 or new_rotation == 270:
 
-            self.faller['right_col'] = left_col + 1
+                if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
+                    return
 
-        self.faller['rotation'] = new_rotation
+                self.faller['right_col'] = left_col
 
-    def wall_kick(self, row: int, left_col: int) -> None:
-        if self.field[row][left_col + 1] != ' ':
-            self.field[row][left_col + 2] = self.field[row][left_col]
-            self.field[row][left_col + 1] = ' '
+            elif new_rotation == 0 or new_rotation == 180:
 
-    def move_left(self) -> bool:  # have to fix logic, why is the empty cell not actually empty
-        """
-        Shifts faller to the left if adjacent cell is available
-
-
-        Returns:
-          bool: True or False
-        """
-        if not self.faller:
-            return False
-
-        left_col = self.faller['left_col']
-        right_col = self.faller['right_col']
-        row = self.faller['row']
-
-        if left_col > 0:
-            if self.field[row][left_col - 1] == ' ' and self.field[row][right_col - 1] == ' ':
-                self.faller['left_col'] -= 1
-                self.faller['right_col'] -= 1
-        return True
+                if left_col + 1 >= self.cols:
+                    return
+                
+                elif self.field[row][left_col + 1] != ' ':
+                    if self.field[row][left_col + 2] == ' ':
+                        self.field[row][left_col + 2] = self.field[row][left_col + 1]
+                        self.field[row][left_col + 1] = ' '
+                    else:
+                        return
+                    
+                self.faller['right_col'] = left_col + 1
+                
+            self.faller['rotation'] = new_rotation
 
     # implement a method later to check if position is available
     def rotate_counter(self) -> None:
@@ -254,16 +242,21 @@ class Game:
             self.faller['right_col'] = left_col
 
         elif new_rotation == 0 or new_rotation == 180:
-            if left_col + 1 >= self.cols or self.field[row][left_col + 1] != ' ':
+            
+            if left_col + 1 >= self.cols:
                 return
-            self.faller['right_col'] = left_col + 1
-
+            
+            elif self.field[row][left_col + 1] != ' ':
+                if self.field[row][left_col + 2] == ' ':
+                    self.field[row][left_col + 2] = self.field[row][left_col + 1]
+                    self.field[row][left_col + 1] = ' '
+                else:
+                    return
+                
+            self.faller['right_col'] = left_col + 1 
+        
         self.faller['rotation'] = new_rotation
-
-    def wall_kick(self, row: int, left_col: int) -> None:
-        if self.field[row][left_col + 1] != ' ':
-            self.field[row][left_col + 2] = self.field[row][left_col]
-            self.field[row][left_col + 1] = ' '
+           
 
     def move_left(self) -> bool:
         """
@@ -312,6 +305,7 @@ class Game:
             if left_col < self.cols - 1:
                 if self.field[row - 1][left_col + 1] == ' ' and self.field[row][left_col + 1] == ' ':
                     self.faller['left_col'] += 1
+            return True
 
     def create_virus(self, command: str) -> None:
         """
@@ -322,7 +316,10 @@ class Game:
         col = int(parts[2])
         color = parts[3].lower()
 
-        self.field[row][col] = color
+        if self.field[row][col] == ' ':
+            self.field[row][col] = color
+        else:
+            return
 
     def resolve_matches(self) -> bool:
         """
@@ -334,8 +331,7 @@ class Game:
         """
 
         matched_cells = []
-        
-        print(self.find_vertical_match())
+
         matched_cells.extend(self.find_horizontal_match())
         matched_cells.extend(self.find_vertical_match())
 
@@ -345,6 +341,7 @@ class Game:
 
         return len(matched_cells) > 0
 
+
     def find_horizontal_match(self) -> list[tuple]:
         """
         Iterates through every row to find horizontally matching cells.
@@ -352,74 +349,70 @@ class Game:
         Returns:
             list[tuple]: List of (row, col) tuples representing horizontal matches.
         """
-        matched = []
+        matched_cells = []
 
         for r in range(self.rows):
             c = 0
-            while c <= self.cols - 4:
-                current_cell = self.field[r][c]
-                char = current_cell.strip('-')
+            while c < self.cols - 3:
+                cell = self.field[r][c].strip('-').strip()
 
-                if char != ' ':
-                    run = [(r, c)]
-                    i = 1
-                
-                    while c + i < self.cols:
-                        next_char  = self.field[r][c + i].strip('-')
-                        if next_char == char:
-                            run.append((r, c + i))
-                            i += 1
-                        else:
-                            break
-
-                    if len(run) >= 4:
-                        for pos in run:
-                            if pos not in matched:
-                                matched.append(pos)
-
-                    c += len(run)
-                else:
+                if not cell or cell[0].lower() not in ['r', 'y', 'b']:
                     c += 1
-        
-        return matched
+                    continue
 
-    def find_vertical_match(self) -> list[tuple]:
+                match_char = cell[0].lower()
+                run = [(r, c)]
+
+                for i in range(1, self.cols - c):
+                    next_cell = self.field[r][c + i].strip('-').strip()
+                    if next_cell and next_cell[0].lower() == match_char:
+                        run.append((r, c + i))
+                    else:
+                        break
+
+                if len(run) >= 4:
+                    matched_cells.extend(run)
+
+                c += len(run)
+
+        return matched_cells
+
+    def find_vertical_match(self) -> set[tuple]:
         """
         Iterates through every column to find vertically matching cells.
 
         Returns:
             list[tuple]: List of (row, col) tuples representing vertical matches.
         """
-        matched = [] 
+        matched_cells = []
 
         for c in range(self.cols):
             r = 0
-            while r <= self.rows - 4:
-                current_cell = self.field[r][c]
-                char = current_cell.strip('-')
+            while r < self.rows - 3:
+                cell = self.field[r][c].strip().strip('-')
 
-                if char != ' ':
-                    run = [(r, c)]
-                    i = 1
-
-                    while r + i < self.rows:
-                        next_char = self.field[r +i][c].strip('-')
-                        if next_char == char:
-                            run.append((r + i, c))
-                            i += 1
-                        else:
-                            break
-                    
-                    if len(run) >= 4:
-                        for pos in run:
-                            if pos not in matched:
-                                matched.append(pos)
-                    
-                    r += len(run)
-                else:
+                if not cell or cell[0].lower() not in ['r', 'y', 'b']:
                     r += 1
-        
-        return matched
+                    continue
+
+                match_char = cell[0].lower()
+                run = [(r, c)]
+
+                for i in range(1, self.rows - r):
+                    next_cell = self.field[r + i][c].strip('-').strip()
+
+                    if next_cell and next_cell[0].lower() == match_char:
+                        run.append((r + i, c))
+                    else:
+                        break
+
+                if len(run) >= 4:
+                    matched_cells.extend(run)  
+
+                r += 1  # Move forward by the length of the match
+
+        return matched_cells
+
 
     def mark_matches(self, matched_cells) -> None:
         """
