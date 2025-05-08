@@ -32,7 +32,6 @@ class Game:
                       for _ in range(self.rows)]
         for r in range(self.rows):
             for c in range(self.cols):
-                print(contents[r][c])
                 self.field[r][c] = contents[r][c]
 
     def create_faller(self, command: str) -> None:
@@ -123,23 +122,26 @@ class Game:
                 self.faller['state'] = 'frozen'
                 self.freeze_faller()
 
-    def get_gravity_vitamin(self) -> list[tuple]:
+    def get_gravity_vitamin(self) -> list:
         vitamin_list = []
-        for row in range(len(self.field) - 2, - 1, - 1):
-            for col in range(len(self.field[row])):
-                if self.field[row][col].strip() in ['R', 'Y', 'B']:
-                    if self.field[row + 1][col] == ' ':
-                        vitamin_list.append((row, col))
+        copy_field = [row[:] for row in self.field]
+
+        for row in range(self.rows - 2, -1, -1):
+            for col in range(self.cols):
+                if self.field[row][col] in ['R', 'Y', 'B']:
+                    if copy_field[row + 1][col] == ' ':
+                        vitamin_list.append((row,col))
+                        copy_field[row][col] = ' '
         return vitamin_list
-
+    
     def apply_gravity_vitamin(self) -> None:
-
-        for row, col in self.get_gravity_vitamin():
-            self.field[row + 1][col] = self.field[row][col]
-            self.field[row][col] = ' '
+        vitamin_list = self.get_gravity_vitamin()  
+        for row, col in vitamin_list:
+                self.field[row + 1][col] = self.field[row][col]
+                self.field[row][col] = ' '
 
         return
-
+                                                             
     def freeze_faller(self) -> None:
         """
         When faller is frozen, saves faller instance onto field.
@@ -221,7 +223,6 @@ class Game:
                 
             self.faller['rotation'] = new_rotation
 
-    # implement a method later to check if position is available
     def rotate_counter(self) -> None:
         """
         Rotates faller counter clockwise, and keeps track of rotated position
@@ -377,7 +378,7 @@ class Game:
 
         return matched_cells
 
-    def find_vertical_match(self) -> set[tuple]:
+    def find_vertical_match(self) -> list[tuple]:
         """
         Iterates through every column to find vertically matching cells.
 
@@ -389,7 +390,7 @@ class Game:
         for c in range(self.cols):
             r = 0
             while r < self.rows - 3:
-                cell = self.field[r][c].strip().strip('-')
+                cell = self.field[r][c].strip('-').strip()
 
                 if not cell or cell[0].lower() not in ['r', 'y', 'b']:
                     r += 1
@@ -409,7 +410,7 @@ class Game:
                 if len(run) >= 4:
                     matched_cells.extend(run)  
 
-                r += 1  # Move forward by the length of the match
+                r += len(run)
 
         return matched_cells
 
@@ -423,6 +424,7 @@ class Game:
           matched_cells = list of coordinates from matched cells
         """
         for r, c in matched_cells:
+            print(self.field[r][c])
             cell = self.field[r][c].strip('-').strip()
             if not cell:
                 continue
@@ -432,10 +434,13 @@ class Game:
 
             elif cell in ['r', 'R', 'y', 'Y', 'b', 'B']:
                 self.field[r][c] = f"*{cell}*"
+                print(f"*{cell}*")
             elif cell in ['R-', 'Y-', 'B-']:
                 self.field[r][c] = f"*{cell}*"
+                print(f"*{cell}*")
             elif cell in ['-R', '-Y', '-B']:
                 self.field[r][c] = f"*{cell}*"
+                print(f"*{cell}*")
 
     def remove_matches(self) -> None:
         """
@@ -443,8 +448,9 @@ class Game:
         """
         for r, c in self.matches_to_clear:
             self.field[r][c] = ' '
-
+            
             if c + 1 < self.cols and '-' in self.field[r][c + 1]:
+                
                 self.field[r][c + 1] = self.field[r][c + 1].replace('-', ' ')
             elif c - 1 >= 0 and '-' in self.field[r][c - 1]:
                 self.field[r][c - 1] = self.field[r][c - 1].replace('-', ' ')

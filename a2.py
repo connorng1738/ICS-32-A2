@@ -45,6 +45,7 @@ def main():
         if not command:
             game.apply_gravity_faller()
             game.apply_gravity_vitamin()
+
         if command.startswith("A"):
             game.rotate_clockwise()
         if command.startswith("B"):
