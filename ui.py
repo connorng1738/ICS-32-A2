@@ -24,8 +24,11 @@ class UI:
                 cell = state.field[r][c]
                 if cell == ' ':
                     print('   ', end='')
-                elif cell in 'rby':
-                    print(f'{cell:^3}', end='')
+                elif cell.strip().lower() in 'rby':
+                    print(f'{cell.strip():^3}', end='')
+                elif cell.strip() in ['R-','B-','Y-']:
+                    print(f'{cell.strip():>3}', end ='')
+
                 elif c + 1 < state.cols and cell.endswith('-') and state.field[r][c + 1].startswith('-'):
                     combined = f'{cell}{state.field[r][c + 1]}'
                     print(f"{combined:^6}", end='')
@@ -33,7 +36,6 @@ class UI:
                     continue
                 else:
                     print(f'{cell:^3}', end='')
-
                 c += 1
             print('|')
         print(' ' + '-' * (3 * state.cols) + ' ')
