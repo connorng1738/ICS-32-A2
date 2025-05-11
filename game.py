@@ -45,7 +45,7 @@ class Game:
 
         if self.faller is not None:
             return
-        
+
         parts = shlex.split(command)
         left, right = parts[1], parts[2]
 
@@ -55,7 +55,7 @@ class Game:
         else:
             left_col = self.cols // 2 - 1
             right_col = self.cols // 2
-        
+
         if self.field[0][left_col] != ' ' or self.field[0][right_col] != ' ':
             return
 
@@ -83,7 +83,8 @@ class Game:
                 self.faller['state'] = 'landed'
 
     def can_create_faller(self, row: int, left_col: int, right_col: int) -> bool:
-        return self.field[row][left_col] == ' ' and self.field[row][right_col] == ' ' #returns game over if occupied by viruses as well 
+        # returns game over if occupied by viruses as well
+        return self.field[row][left_col] == ' ' and self.field[row][right_col] == ' '
 
     def apply_gravity_faller(self) -> None:
         """
@@ -130,18 +131,18 @@ class Game:
             for col in range(self.cols):
                 if self.field[row][col] in ['R', 'Y', 'B']:
                     if copy_field[row + 1][col] == ' ':
-                        vitamin_list.append((row,col))
+                        vitamin_list.append((row, col))
                         copy_field[row][col] = ' '
         return vitamin_list
-    
+
     def apply_gravity_vitamin(self) -> None:
-        vitamin_list = self.get_gravity_vitamin()  
+        vitamin_list = self.get_gravity_vitamin()
         for row, col in vitamin_list:
-                self.field[row + 1][col] = self.field[row][col]
-                self.field[row][col] = ' '
+            self.field[row + 1][col] = self.field[row][col]
+            self.field[row][col] = ' '
 
         return
-                                                             
+
     def freeze_faller(self) -> None:
         """
         When faller is frozen, saves faller instance onto field.
@@ -188,43 +189,42 @@ class Game:
         return True
 
     def rotate_clockwise(self) -> None:
-            """
-            Rotates faller clockwise, and keeps track of rotated position
-            """
-            if not self.faller:
+        """
+        Rotates faller clockwise, and keeps track of rotated position
+        """
+        if not self.faller:
+            return
+
+        current_rotation = self.faller['rotation']
+        new_rotation = (current_rotation + 90) % 360
+
+        row = self.faller['row']
+        left_col = self.faller['left_col']
+
+        if new_rotation == 90 or new_rotation == 270:
+
+            if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
                 return
 
-            current_rotation = self.faller['rotation']
-            new_rotation = (current_rotation + 90) % 360
+            self.faller['right_col'] = left_col
 
-            row = self.faller['row']
-            left_col = self.faller['left_col']
-            
+        elif new_rotation == 0 or new_rotation == 180:
 
-            if new_rotation == 90 or new_rotation == 270:
+            if left_col + 1 >= self.cols:
+                return
 
-                if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
+            elif self.field[row][left_col + 1] != ' ':
+                if self.field[row][left_col - 1] == ' ':
+                    self.faller['left_col'] -= 1
+                    self.field[row][left_col] = ' '
+                    self.faller['right_col'] = left_col
+                else:
                     return
+            elif self.field[row][left_col + 1] == ' ':
+                self.faller['right_col'] = left_col + 1
 
-                self.faller['right_col'] = left_col
+        self.faller['rotation'] = new_rotation
 
-            elif new_rotation == 0 or new_rotation == 180:
-
-                if left_col + 1 >= self.cols:
-                    return
-                
-                elif self.field[row][left_col + 1] != ' ':
-                    if self.field[row][left_col - 1] == ' ':
-                        self.faller['left_col'] -= 1
-                        self.field[row][left_col] = ' '
-                    else:
-                        return
-                    
-                self.faller['right_col'] = left_col
-                    
-            self.faller['rotation'] = new_rotation
-
-            
     def rotate_counter(self) -> None:
         """
         Rotates faller counter clockwise, and keeps track of rotated position
@@ -242,25 +242,26 @@ class Game:
         if new_rotation == 90 or new_rotation == 270:
             if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
                 return
-            
+
             self.faller['right_col'] = left_col
 
         elif new_rotation == 0 or new_rotation == 180:
-            
+
             if left_col + 1 >= self.cols:
                 return
-            
+
             elif self.field[row][left_col + 1] != ' ':
-                    if self.field[row][left_col - 1] == ' ':
-                        self.faller['left_col'] -= 1
-                        self.field[row][left_col] = ' '
-                    else:
-                        return
-                    
+                if self.field[row][left_col - 1] == ' ':
+                    self.faller['left_col'] -= 1
+                    self.field[row][left_col] = ' '
                     self.faller['right_col'] = left_col
-                
-            self.faller['rotation'] = new_rotation
-           
+                else:
+                    return
+
+            elif self.field[row][left_col + 1] == ' ':
+                self.faller['right_col'] = left_col + 1
+
+        self.faller['rotation'] = new_rotation
 
     def move_left(self) -> bool:
         """
@@ -277,8 +278,7 @@ class Game:
         right_col = self.faller['right_col']
         row = self.faller['row']
         rotation = self.faller['rotation']
-        
-            
+
         if rotation == 0 or rotation == 180:
             if left_col > 0:
                 if self.field[row][left_col - 1] == ' ' and self.field[row][right_col - 1] == ' ':
@@ -289,16 +289,19 @@ class Game:
                     if self.field[row - 1][self.faller['left_col']] == ' ' and self.field[row - 1][self.faller['right_col']] == ' ' and self.faller['state'] == 'landed':
                         self.faller['state'] = 'falling'
                     elif self.field[row + 1][self.faller['left_col']] != ' ' or self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
-                            self.faller['state'] = 'landed'
+                        self.faller['state'] = 'landed'
+
 
             return True
         elif rotation == 90 or rotation == 270:
             if left_col > 0:
                 if self.field[row - 1][left_col - 1] == ' ' and self.field[row][left_col - 1] == ' ':
-                    self.faller['state'] = 'falling'
                     self.faller['left_col'] -= 1
-                    if self.field[row - 2][self.faller['left_col']] == ' ':
-                        self.faller['state'] = 'falling'
+                    if self.field[row - 1][self.faller['left_col']] and self.faller['state'] == 'landed':
+                        self.faller['state'] = 'landed'
+                    if row > 0 and self.faller['state'] == 'falling':
+                        self.faller['state'] = 'landed'
+                        
             return True
 
     def move_right(self) -> bool:
@@ -326,16 +329,18 @@ class Game:
                     if row < self.rows - 1:
                         if self.field[row - 1][self.faller['left_col']] == ' ' and self.field[row - 1][self.faller['right_col']] == ' ' and self.faller['state'] == 'landed':
                             self.faller['state'] = 'falling'
-                        if self.field[row + 1][self.faller['left_col']] != ' ' or self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
-                                self.faller['state'] = 'landed'
+                        elif self.field[row + 1][self.faller['left_col']] != ' ' or self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
+                            self.faller['state'] = 'landed'
             return True
         elif rotation == 90 or rotation == 270:
             if left_col < self.cols - 1:
                 if self.field[row - 1][left_col + 1] == ' ' and self.field[row][left_col + 1] == ' ':
-                    self.faller['state'] = 'falling'
                     self.faller['left_col'] += 1
-                    if self.field[row - 2][self.faller['left_col']] == ' ':
+                    if self.field[row - 1][self.faller['left_col']] and self.faller['state'] == 'landed':
                         self.faller['state'] = 'falling'
+                    
+                    if row < self.rows  and self.faller['state'] == 'falling':
+                        self.faller['state'] = 'landed'
             return True
 
     def create_virus(self, command: str) -> None:
@@ -371,7 +376,6 @@ class Game:
             self.matches_to_clear = matched_cells
 
         return len(matched_cells) > 0
-
 
     def find_horizontal_match(self) -> list[tuple]:
         """
@@ -438,12 +442,11 @@ class Game:
                         break
 
                 if len(run) >= 4:
-                    matched_cells.extend(run)  
+                    matched_cells.extend(run)
 
                 r += len(run)
 
         return matched_cells
-
 
     def mark_matches(self, matched_cells) -> None:
         """
@@ -474,9 +477,8 @@ class Game:
         """
         for r, c in self.matches_to_clear:
             self.field[r][c] = ' '
-            
+
             if c + 1 < self.cols and '-' in self.field[r][c + 1]:
-                
                 self.field[r][c + 1] = self.field[r][c + 1].replace('-', ' ')
             elif c - 1 >= 0 and '-' in self.field[r][c - 1]:
                 self.field[r][c - 1] = self.field[r][c - 1].replace('-', ' ')
