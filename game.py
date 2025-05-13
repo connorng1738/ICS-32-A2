@@ -8,6 +8,7 @@ class Game:
         self.field = self.create_empty_field()
         self.faller = None
         self.matches_to_clear = []
+        self.raw_matches = []
 
     def create_empty_field(self) -> list[list]:
         """"
@@ -206,8 +207,13 @@ class Game:
             if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
                 return
 
+            
             self.faller['right_col'] = left_col
 
+            if self.field[row + 1][left_col] == ' ' and self.faller['state'] == 'landed':
+                self.faller['state'] = 'falling'
+
+            
         elif new_rotation == 0 or new_rotation == 180:
 
             if left_col + 1 >= self.cols:
@@ -222,6 +228,8 @@ class Game:
                     return
             elif self.field[row][left_col + 1] == ' ':
                 self.faller['right_col'] = left_col + 1
+            if self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
+                self.faller['state'] = 'landed'
 
         self.faller['rotation'] = new_rotation
 
@@ -244,7 +252,9 @@ class Game:
                 return
 
             self.faller['right_col'] = left_col
-
+            if self.field[row + 1][left_col] == ' ' and self.faller['state'] == 'landed':
+                self.faller['state'] = 'falling'
+                
         elif new_rotation == 0 or new_rotation == 180:
 
             if left_col + 1 >= self.cols:
@@ -260,6 +270,8 @@ class Game:
 
             elif self.field[row][left_col + 1] == ' ':
                 self.faller['right_col'] = left_col + 1
+            if self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
+                self.faller['state'] = 'landed'
 
         self.faller['rotation'] = new_rotation
 
@@ -431,6 +443,7 @@ class Game:
                     continue
 
                 match_char = cell[0].lower()
+
                 run = [(r, c)]
 
                 for i in range(1, self.rows - r):
@@ -448,7 +461,7 @@ class Game:
 
         return matched_cells
 
-    def mark_matches(self, matched_cells) -> None:
+    def mark_matches(self, matched_cells) -> list: #edit to return list of raw matched cells
         """
         Marks all matches with '*'
 
@@ -456,7 +469,11 @@ class Game:
         Arguments:
           matched_cells = list of coordinates from matched cells
         """
+
+        raw_list = []
+
         for r, c in matched_cells:
+            raw_list.append(self.field[r][c])
             cell = self.field[r][c].strip('-').strip()
             if not cell:
                 continue
@@ -471,16 +488,20 @@ class Game:
             elif cell in ['-R', '-Y', '-B']:
                 self.field[r][c] = f"*{cell}*"
 
-    def remove_matches(self) -> None:
+        self.raw_matches = raw_list
+
+    def remove_matches(self) -> None: 
         """
         Clears all matched cells
         """
+        
         for r, c in self.matches_to_clear:
             self.field[r][c] = ' '
-
-            if c + 1 < self.cols and '-' in self.field[r][c + 1]:
-                self.field[r][c + 1] = self.field[r][c + 1].replace('-', ' ')
-            elif c - 1 >= 0 and '-' in self.field[r][c - 1]:
-                self.field[r][c - 1] = self.field[r][c - 1].replace('-', ' ')
+            for char in self.raw_matches:
+                if '-' in char:
+                    if c + 1 < self.cols and '-' in self.field[r][c + 1]:
+                        self.field[r][c + 1] = self.field[r][c + 1].replace('-', ' ')
+                    elif c - 1 >= 0 and '-' in self.field[r][c - 1]:
+                        self.field[r][c - 1] = self.field[r][c - 1].replace('-', ' ')
 
         self.matches_to_clear = []
