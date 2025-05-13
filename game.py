@@ -99,7 +99,7 @@ class Game:
         right_col = self.faller['right_col']
         rotation = self.faller['rotation']
         if rotation == 0 or rotation == 180:
-            if row + 1 < self.rows and self.field[row + 1][left_col] == ' ' and self.field[row + 1][right_col] == ' ':
+            if row + 1 < self.rows and self.field[row + 1][left_col] == ' ' and self.field[row + 1][right_col] == ' ': #redundant?
                 self.faller['row'] += 1
                 if row + 2 >= self.rows or self.field[row + 2][left_col] != ' ' or self.field[row + 2][right_col] != ' ':
                     self.faller['state'] = 'landed'
@@ -124,7 +124,14 @@ class Game:
                 self.faller['state'] = 'frozen'
                 self.freeze_faller()
 
-    def get_gravity_vitamin(self) -> list:
+    def get_gravity_vitamin(self) -> list[tuple]:
+        """
+        Iterates through field to identify vitamin capsules
+
+        Returns:
+          list[tuple]: coordinates of vitamin capsules
+    
+        """
         vitamin_list = []
         copy_field = [row[:] for row in self.field]
 
@@ -134,9 +141,16 @@ class Game:
                     if copy_field[row + 1][col] == ' ':
                         vitamin_list.append((row, col))
                         copy_field[row][col] = ' '
+        
+        for row in range(self.rows - 2, -1, -1): #need to find the pairs    
+           pass
+
         return vitamin_list
 
     def apply_gravity_vitamin(self) -> None:
+        """
+        Applies gravity on given vitamins
+        """
         vitamin_list = self.get_gravity_vitamin()
         for row, col in vitamin_list:
             self.field[row + 1][col] = self.field[row][col]
@@ -298,7 +312,7 @@ class Game:
                     self.faller['right_col'] -= 1
 
                 if row < self.rows - 1:
-                    if self.field[row - 1][self.faller['left_col']] == ' ' and self.field[row - 1][self.faller['right_col']] == ' ' and self.faller['state'] == 'landed':
+                    if self.field[row + 1][self.faller['left_col']] == ' ' and self.field[row + 1][self.faller['right_col']] == ' ' and self.faller['state'] == 'landed':
                         self.faller['state'] = 'falling'
                     elif self.field[row + 1][self.faller['left_col']] != ' ' or self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
                         self.faller['state'] = 'landed'
@@ -309,10 +323,11 @@ class Game:
             if left_col > 0:
                 if self.field[row - 1][left_col - 1] == ' ' and self.field[row][left_col - 1] == ' ':
                     self.faller['left_col'] -= 1
-                    if self.field[row - 1][self.faller['left_col']] and self.faller['state'] == 'landed':
-                        self.faller['state'] = 'landed'
-                    if row > 0 and self.faller['state'] == 'falling':
-                        self.faller['state'] = 'landed'
+                    if row < self.rows - 1:
+                        if self.field[row + 1][self.faller['left_col']] == ' ' and self.faller['state'] == 'landed':
+                            self.faller['state'] = 'falling'
+                        elif self.field[row + 1][self.faller['left_col']]  != ' ' and self.faller['state'] == 'falling':
+                            self.faller['state'] = 'landed'
                         
             return True
 
@@ -339,7 +354,7 @@ class Game:
                     self.faller['left_col'] += 1
                     self.faller['right_col'] += 1
                     if row < self.rows - 1:
-                        if self.field[row - 1][self.faller['left_col']] == ' ' and self.field[row - 1][self.faller['right_col']] == ' ' and self.faller['state'] == 'landed':
+                        if self.field[row + 1][self.faller['left_col']] == ' ' and self.field[row + 1][self.faller['right_col']] == ' ' and self.faller['state'] == 'landed':
                             self.faller['state'] = 'falling'
                         elif self.field[row + 1][self.faller['left_col']] != ' ' or self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
                             self.faller['state'] = 'landed'
@@ -348,11 +363,14 @@ class Game:
             if left_col < self.cols - 1:
                 if self.field[row - 1][left_col + 1] == ' ' and self.field[row][left_col + 1] == ' ':
                     self.faller['left_col'] += 1
-                    if self.field[row - 1][self.faller['left_col']] and self.faller['state'] == 'landed':
-                        self.faller['state'] = 'falling'
-                    
-                    if row < self.rows  and self.faller['state'] == 'falling':
-                        self.faller['state'] = 'landed'
+
+                    if row < self.rows - 1:
+                        if self.field[row + 1][self.faller['left_col']] == ' ' and self.faller['state'] == 'landed':
+                            print('falling')
+                            self.faller['state'] = 'falling'
+                        elif self.field[row + 1][self.faller['left_col']]  != ' ' and self.faller['state'] == 'falling':
+                            print('landed')
+                            self.faller['state'] = 'landed'
             return True
 
     def create_virus(self, command: str) -> None:
