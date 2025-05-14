@@ -491,7 +491,7 @@ class Game:
 
         return matched_cells
 
-    def mark_matches(self, matched_cells) -> None:
+    def mark_matches(self, matched_cells: list[tuple]) -> None:
         """
         Marks all matches with '*'
 
