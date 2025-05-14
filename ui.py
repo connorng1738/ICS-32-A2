@@ -11,6 +11,7 @@ class UI:
           state: Game logic including field information and faller movement
 
         """
+
         for r in range(state.rows):
             print('|', end='')
             c = 0
@@ -26,8 +27,8 @@ class UI:
                     print('   ', end='')
                 elif cell.strip().lower() in 'rby':
                     print(f'{cell.strip():^3}', end='')
-                elif cell.strip() in ['R-','B-','Y-']:
-                    print(f'{cell.strip():>3}', end ='')
+                elif cell.strip() in ['R-', 'B-', 'Y-']:
+                    print(f'{cell.strip():>3}', end='')
 
                 elif c + 1 < state.cols and cell.endswith('-') and state.field[r][c + 1].startswith('-'):
                     combined = f'{cell}{state.field[r][c + 1]}'
@@ -68,7 +69,20 @@ def get_faller_symbol(row: int, col: int, faller: dict) -> str:
     return get_rotation(rotation, r, l_col, r_col, l_color, r_color, state, row, col)
 
 
-def get_rotation(rotation: int, r: int, l_col: int, r_col: int, l_color: str, r_color: str, state: str,  row: int, col: int):
+def get_rotation(rotation: int, r: int, l_col: int, r_col: int, l_color: str, r_color: str, state: str,  row: int, col: int) -> None:
+    """
+    Returns faller orientation based on rotation state
+
+    Arguments:
+      r: Row position of faller
+      l_col: Left column of faller
+      r_col: Right column of faller
+      l_color: Left color of faller
+      r_color: Right color of faller
+      state: Current state of faller
+      row: Current row being checked
+      col: Current column being checked
+    """
     if rotation == 0:
         return _rotate_0(r, l_col, r_col, l_color, r_color, state, row, col)
 

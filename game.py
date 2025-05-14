@@ -37,7 +37,7 @@ class Game:
 
     def create_faller(self, command: str) -> None:
         """
-        Creates a faller symbol in middle of field
+        Creates a faller symbol and stores faller information in a dict
 
 
         Arguments:
@@ -48,7 +48,10 @@ class Game:
             return
 
         parts = shlex.split(command)
-        left, right = parts[1], parts[2]
+        if len(parts) == 3:
+            left, right = parts[1], parts[2]
+        else:
+            return
 
         if self.cols % 2 == 1:
             left_col = self.cols // 2 - 1
@@ -71,6 +74,9 @@ class Game:
         }
 
     def faller_start_state(self) -> None:
+        """
+        Determines faller state when initializing
+        """
         row = self.faller['row']
         left_col = self.faller['left_col']
         right_col = self.faller['right_col']
@@ -78,13 +84,19 @@ class Game:
         if row == 1:
             if self.field[row + 1][left_col] == ' ' and self.field[row + 1][right_col] == ' ':
                 self.faller['state'] = 'falling'
-            elif self.field[row][left_col] != ' ' and self.field[row][right_col] == ' ':
-                return False
-            else:
+            elif self.field[row + 1][left_col] != ' ' or self.field[row + 1][right_col] != ' ':    
                 self.faller['state'] = 'landed'
+                
 
     def can_create_faller(self, row: int, left_col: int, right_col: int) -> bool:
-        # returns game over if occupied by viruses as well
+        """
+        Checks if faller starting position is occupied
+
+        Returns:
+          bool: True if space is not occupied, False if occupied
+
+        """
+
         return self.field[row][left_col] == ' ' and self.field[row][right_col] == ' '
 
     def apply_gravity_faller(self) -> None:
@@ -99,7 +111,7 @@ class Game:
         right_col = self.faller['right_col']
         rotation = self.faller['rotation']
         if rotation == 0 or rotation == 180:
-            if row + 1 < self.rows and self.field[row + 1][left_col] == ' ' and self.field[row + 1][right_col] == ' ': #redundant?
+            if row + 1 < self.rows and self.field[row + 1][left_col] == ' ' and self.field[row + 1][right_col] == ' ':
                 self.faller['row'] += 1
                 if row + 2 >= self.rows or self.field[row + 2][left_col] != ' ' or self.field[row + 2][right_col] != ' ':
                     self.faller['state'] = 'landed'
@@ -130,20 +142,24 @@ class Game:
 
         Returns:
           list[tuple]: coordinates of vitamin capsules
-    
+
         """
         vitamin_list = []
         copy_field = [row[:] for row in self.field]
 
         for row in range(self.rows - 2, -1, -1):
-            for col in range(self.cols):
-                if self.field[row][col] in ['R', 'Y', 'B']:
+            for col in range(self.cols - 1):
+
+                if copy_field[row][col].strip() in ['R', 'Y', 'B']:
                     if copy_field[row + 1][col] == ' ':
                         vitamin_list.append((row, col))
                         copy_field[row][col] = ' '
-        
-        for row in range(self.rows - 2, -1, -1): #need to find the pairs    
-           pass
+                elif copy_field[row][col].strip('-').strip() in ['R', 'Y', 'B'] and copy_field[row][col + 1].strip('-').strip() in ['R', 'Y', 'B']:
+                    if copy_field[row + 1][col] == ' ' and copy_field[row + 1][col + 1] == ' ':
+                        vitamin_list.append((row, col))
+                        vitamin_list.append((row, col + 1))
+                        copy_field[row][col] = ' '
+                        copy_field[row][col + 1] = ' '
 
         return vitamin_list
 
@@ -152,6 +168,7 @@ class Game:
         Applies gravity on given vitamins
         """
         vitamin_list = self.get_gravity_vitamin()
+
         for row, col in vitamin_list:
             self.field[row + 1][col] = self.field[row][col]
             self.field[row][col] = ' '
@@ -221,13 +238,11 @@ class Game:
             if row - 1 < 0 or self.field[row - 1][left_col] != ' ' or self.field[row][left_col] != ' ':
                 return
 
-            
             self.faller['right_col'] = left_col
 
             if self.field[row + 1][left_col] == ' ' and self.faller['state'] == 'landed':
                 self.faller['state'] = 'falling'
 
-            
         elif new_rotation == 0 or new_rotation == 180:
 
             if left_col + 1 >= self.cols:
@@ -242,7 +257,7 @@ class Game:
                     return
             elif self.field[row][left_col + 1] == ' ':
                 self.faller['right_col'] = left_col + 1
-            if self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
+            if row + 1 < self.rows and self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
                 self.faller['state'] = 'landed'
 
         self.faller['rotation'] = new_rotation
@@ -268,7 +283,7 @@ class Game:
             self.faller['right_col'] = left_col
             if self.field[row + 1][left_col] == ' ' and self.faller['state'] == 'landed':
                 self.faller['state'] = 'falling'
-                
+
         elif new_rotation == 0 or new_rotation == 180:
 
             if left_col + 1 >= self.cols:
@@ -284,7 +299,7 @@ class Game:
 
             elif self.field[row][left_col + 1] == ' ':
                 self.faller['right_col'] = left_col + 1
-            if self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
+            if row + 1 < self.rows and self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
                 self.faller['state'] = 'landed'
 
         self.faller['rotation'] = new_rotation
@@ -317,7 +332,6 @@ class Game:
                     elif self.field[row + 1][self.faller['left_col']] != ' ' or self.field[row + 1][self.faller['right_col']] != ' ' and self.faller['state'] == 'falling':
                         self.faller['state'] = 'landed'
 
-
             return True
         elif rotation == 90 or rotation == 270:
             if left_col > 0:
@@ -326,9 +340,9 @@ class Game:
                     if row < self.rows - 1:
                         if self.field[row + 1][self.faller['left_col']] == ' ' and self.faller['state'] == 'landed':
                             self.faller['state'] = 'falling'
-                        elif self.field[row + 1][self.faller['left_col']]  != ' ' and self.faller['state'] == 'falling':
+                        elif self.field[row + 1][self.faller['left_col']] != ' ' and self.faller['state'] == 'falling':
                             self.faller['state'] = 'landed'
-                        
+
             return True
 
     def move_right(self) -> bool:
@@ -366,10 +380,8 @@ class Game:
 
                     if row < self.rows - 1:
                         if self.field[row + 1][self.faller['left_col']] == ' ' and self.faller['state'] == 'landed':
-                            print('falling')
                             self.faller['state'] = 'falling'
-                        elif self.field[row + 1][self.faller['left_col']]  != ' ' and self.faller['state'] == 'falling':
-                            print('landed')
+                        elif self.field[row + 1][self.faller['left_col']] != ' ' and self.faller['state'] == 'falling':
                             self.faller['state'] = 'landed'
             return True
 
@@ -479,7 +491,7 @@ class Game:
 
         return matched_cells
 
-    def mark_matches(self, matched_cells) -> list: #edit to return list of raw matched cells
+    def mark_matches(self, matched_cells) -> None:
         """
         Marks all matches with '*'
 
@@ -493,6 +505,7 @@ class Game:
         for r, c in matched_cells:
             raw_list.append(self.field[r][c])
             cell = self.field[r][c].strip('-').strip()
+
             if not cell:
                 continue
 
@@ -508,18 +521,20 @@ class Game:
 
         self.raw_matches = raw_list
 
-    def remove_matches(self) -> None: 
+    def remove_matches(self) -> None:
         """
         Clears all matched cells
         """
-        
+
         for r, c in self.matches_to_clear:
             self.field[r][c] = ' '
             for char in self.raw_matches:
-                if '-' in char:
-                    if c + 1 < self.cols and '-' in self.field[r][c + 1]:
-                        self.field[r][c + 1] = self.field[r][c + 1].replace('-', ' ')
-                    elif c - 1 >= 0 and '-' in self.field[r][c - 1]:
-                        self.field[r][c - 1] = self.field[r][c - 1].replace('-', ' ')
+                if char.endswith('-') and c + 1 < self.cols and self.field[r][c + 1].startswith('-'):
+                    self.field[r][c + 1] = self.field[r][c +
+                                                         1].replace('-', ' ')
+                elif char.startswith('-') and c - 1 >= 0 and self.field[r][c - 1].endswith('-'):
+                    self.field[r][c - 1] = self.field[r][c -
+                                                         1].replace('-', ' ')
 
         self.matches_to_clear = []
+        self.raw_matches = []
